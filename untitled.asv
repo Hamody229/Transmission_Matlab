@@ -22,7 +22,7 @@ function varargout = untitled(varargin)
 
 % Edit the above text to modify the response to help untitled
 
-% Last Modified by GUIDE v2.5 01-May-2025 17:14:01
+% Last Modified by GUIDE v2.5 03-May-2025 01:57:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -56,14 +56,22 @@ function untitled_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 
 % Update handles structure
+set(handles.conductorR, 'Enable', 'on');
+set(handles.conductorL, 'Enable', 'on');
+set(handles.conductorD, 'Enable', 'on');
+set(handles.spacing, 'Enable', 'on');
+set(handles.spacingU, 'Enable', 'on'); 
+
+set(handles.spacingU, 'Visible', 'off');
+set(handles.text11, 'Visible', 'off');
+
+set(handles.spacing, 'Visible', 'on');
+set(handles.text6, 'Visible', 'on'); 
+
+
+handles.output = hObject;
+
 guidata(hObject, handles);
-set(handles.conductorR, 'Enable', 'off');
-set(handles.conductorL, 'Enable', 'off');
-set(handles.conductorD, 'Enable', 'off');
-set(handles.spacing, 'Enable', 'off');
-set(handles.spacingU, 'visible', 'off');
-set(handles.text11, 'visible', 'off');
-set(handles.text4, 'visible', 'on');
 
 
 
@@ -182,6 +190,29 @@ function popupmenu1_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns popupmenu1 contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from popupmenu1
+val = get(handles.popupmenu1,'value');
+
+switch val 
+    case 1 
+        set(handles.conductorR, 'Enable', 'on');
+        set(handles.conductorL, 'Enable', 'on');
+        set(handles.conductorD, 'Enable', 'on');
+        set(handles.spacing, 'Visible', 'on');
+        set(handles.spacingU, 'Visible', 'off');
+        set(handles.text11, 'visible', 'off');
+        set(handles.text6, 'visible', 'on');
+
+    case 2 
+        set(handles.conductorR, 'Enable', 'on');
+        set(handles.conductorL, 'Enable', 'on');
+        set(handles.conductorD, 'Enable', 'on');
+        set(handles.spacing, 'Visible', 'off');
+        set(handles.spacingU, 'Visible', 'on');
+        set(handles.text11, 'visible', 'on');
+        set(handles.text6, 'visible', 'off');
+        
+end
+
 
 
 % --- Executes during object creation, after setting all properties.
@@ -202,68 +233,59 @@ function pushbutton5_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton5 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-Resistivity =str2double(get(handles.conductorR,'string'));
-ConductorLength = str2double(get(handles.conductorL,'string'));
-ConductorDiamter =str2double(get(handles.conductorD,'string'));
 
+% Get input values from the GUI
+Resistivity = str2double(get(handles.conductorR, 'string'));
+ConductorLength = str2double(get(handles.conductorL, 'string'));
+ConductorDiameter = str2double(get(handles.conductorD, 'string'));
 
-val = get(handles.popupmenu1,'value');
+val = get(handles.popupmenu1, 'value'); 
+GMR = 0.7788 * (ConductorDiameter/2);
+Area = (pi * (ConductorDiameter)^2) / 4;
+Resistance = (Resistivity * ConductorLength) / Area;
 
-GMR = 0.7788*(ConductorDiamter/2);
-
-Area = (pi*(ConductorDiamter)^2)/4 ;
-Resistance = (Resistivity * ConductorLength)/Area ;
-switch val 
+% Calculate inductance and capacitance based on spacing type
+switch val
     case 1 
-        set(handles.conductorR, 'Enable', 'on');
-        set(handles.conductorL, 'Enable', 'on');
-        set(handles.conductorD, 'Enable', 'on');
-        set(handles.spacing, 'Enable', 'on');
-        set(handles.spacingU, 'Visible', 'off');
-
-        Spacing = str2double(get(handles.spacing,'string')); 
-
-        if isnan(Spacing) || Spacing <= 0 || isnan(GMR) || GMR <= 0 || Spacing <= GMR
-             errordlg('Invalid Symmetrical Spacing or Conductor Diameter input.','Input Error');
-             return; 
-        end
-        Inductance = ((2e-7)*log(Spacing/GMR))*ConductorLength;
-        r = ConductorDiamter/2;
-        Capacitance = ((2*pi*8.854e-12)/log(Spacing/r))*ConductorLength;
+        Spacing = str2double(get(handles.spacing, 'string'));
+        Inductance = ((2e-7) * log(Spacing/GMR)) * ConductorLength;
+        r = ConductorDiameter/2;
+        Capacitance = ((2*pi*8.854e-12) / log(Spacing/r)) * ConductorLength;
 
     case 2 
-        set(handles.conductorR, 'Enable', 'on');
-        set(handles.conductorL, 'Enable', 'on');
-        set(handles.conductorD, 'Enable', 'on');
-        set(handles.spacing, 'Visible', 'off');
-        set(handles.spacingU, 'Enable', 'on');
-        
-        spacingU_str = get(handles.spacingU,'string');
+        spacingU_str = get(handles.spacingU, 'string');
         spacingU_str = strrep(spacingU_str, '[', '');
         spacingU_str = strrep(spacingU_str, ']', '');
-        spacingU = [];
         spacingU = str2num(spacingU_str);
-
-
+        
         D1 = spacingU(1);
         D2 = spacingU(2);
         D3 = spacingU(3);
         Deq = (D1 * D2 * D3)^(1/3);
+        
         if Deq <= GMR
-             errordlg('Equivalent spacing must be greater than GMR. Check inputs.','Input Error');
-             return; 
+            errordlg('Equivalent spacing must be greater than GMR. Check inputs.', 'Input Error');
+            return;
         end
-        Inductance = ((2e-7)*log(Deq/GMR))*ConductorLength;
-        r = ConductorDiamter/2;
-        Capacitance = ((2*pi*8.854e-12)/log(Deq/r))*ConductorLength;
+        
+        Inductance = ((2e-7) * log(Deq/GMR)) * ConductorLength;
+        r = ConductorDiameter/2;
+        Capacitance = ((2*pi*8.854e-12) / log(Deq/r)) * ConductorLength;
 
     otherwise
-         Inductance = NaN;
-         Capacitance = NaN;
+        Inductance = NaN;
+        Capacitance = NaN;
 end
-set(handles.Resistance,'string',Resistance);
-set(handles.Inductance,'string',Inductance);
-set(handles.Capacitance,'string',Capacitance);
+handles.R = Resistance ;
+handles.I = Inductance ; 
+handles.C = Capacitance ;
+
+% Display calculated values
+set(handles.Resistance, 'string', Resistance);
+set(handles.Inductance, 'string', Inductance);
+set(handles.Capacitance, 'string', Capacitance);
+
+guidata(hObject, handles);
 
 
 
@@ -356,3 +378,515 @@ function spacingU_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+
+function model_Callback(hObject, eventdata, handles)
+% hObject    handle to model (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of model as text
+%        str2double(get(hObject,'String')) returns contents of model as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function model_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to model (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function parameters_Callback(hObject, eventdata, handles)
+% hObject    handle to parameters (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of parameters as text
+%        str2double(get(hObject,'String')) returns contents of parameters as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function parameters_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to parameters (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in popupmenu2.
+function popupmenu2_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu2 contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu2
+
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+
+function freq_Callback(hObject, eventdata, handles)
+% hObject    handle to freq (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of freq as text
+%        str2double(get(hObject,'String')) returns contents of freq as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function freq_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to freq (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit19_Callback(hObject, eventdata, handles)
+% hObject    handle to parameters (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of parameters as text
+%        str2double(get(hObject,'String')) returns contents of parameters as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit19_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to parameters (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function generate_Callback(hObject, eventdata, handles)
+% hObject    handle to generate (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+    % Get input values from the GUI
+    Resistivity = str2double(get(handles.conductorR, 'string'));
+    ConductorLength = str2double(get(handles.conductorL, 'string'));
+    ConductorDiameter = str2double(get(handles.conductorD, 'string'));
+    Frequency = str2double(get(handles.freq, 'string'));
+
+    val = get(handles.popupmenu1, 'value'); % Spacing type (symmetric/unsymmetric)
+    val2 = get(handles.popupmenu2, 'value'); % Medium model type
+
+    % Calculate GMR and conductor area
+    GMR = 0.7788 * (ConductorDiameter/2);
+    Area = (pi * (ConductorDiameter)^2) / 4;
+    Resistance = handles.R ;
+    Inductance = handles.I ;
+    Capacitance= handles.C ;
+
+    % Calculate omega, Z, and Y
+    omega = 2 * pi * Frequency;
+    Z = Resistance + 1j * omega * Inductance; 
+    Y = 1j * omega * Capacitance;         
+
+    % Initialize ABCD parameters (use complex NaN for detection)
+    A = complex(NaN, NaN); B = complex(NaN, NaN); C = complex(NaN, NaN); D = complex(NaN, NaN);
+
+    % Calculate ABCD parameters based on line length (transmission line model)
+    if (ConductorLength < 80000) % Short line model
+        A = 1;
+        B = Z;
+        C = 0;
+        D = 1;
+        model_str = 'Short Model';
+        param_str = sprintf('A = %.4f\nB = %.4f %+.4fj\nC = %.4f\nD = %.4f', A, real(B), imag(B), C, D);
+
+    else % Medium line model
+        if (val2 == 2) % Pi model
+            A = 1 + (Z*Y)/2;
+            B = Z;
+            C = Y * (1 + (Z*Y)/4);
+            D = A;
+            model_str = 'Medium Model (Pi)';
+        else % T model (default or val2 == 1)
+            A = 1 + (Z*Y)/2;
+            B = Z * (1 + (Z*Y)/4);
+            C = Y;
+            D = A;
+            model_str = 'Medium Model (T)';
+        end
+         param_str = sprintf('A = %.4f %+.4fj\nB = %.4f %+.4fj\nC = %.4e %+.4ej\nD = %.4f %+.4fj', ...
+                             real(A), imag(A), real(B), imag(B), real(C), imag(C), real(D), imag(D));
+    end
+
+    % --- If calculations successful, update GUI and store parameters ---
+    set(handles.model, 'String', model_str);
+    set(handles.parameters, 'String', strrep(param_str, '+-', '-')); 
+
+    % Display calculated R, L, C values in their respective boxes
+    set(handles.Resistance, 'string', sprintf('%.6f', Resistance));
+    set(handles.Inductance, 'string', sprintf('%.6e', Inductance)); % Use scientific for potentially small L
+    set(handles.Capacitance, 'string', sprintf('%.6e', Capacitance)); % Use scientific for potentially small C
+
+    % *** NEW: Store calculated ABCD parameters in handles structure ***
+    handles.A_param = A;
+    handles.B_param = B;
+    handles.C_param = C;
+    handles.D_param = D;
+    handles.params_generated = true; % Set flag indicating successful generation
+
+    % *** NEW: Save the updated handles structure ***
+    guidata(hObject, handles);
+
+
+
+% --- Executes during object creation, after setting all properties.
+function generate_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to generate (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in popupmenu4.
+function popupmenu4_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu4 contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu4
+
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu4_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function vr_Callback(hObject, eventdata, handles)
+% hObject    handle to vr (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of vr as text
+%        str2double(get(hObject,'String')) returns contents of vr as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function vr_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to vr (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function pr_Callback(hObject, eventdata, handles)
+% hObject    handle to pr (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of pr as text
+%        str2double(get(hObject,'String')) returns contents of pr as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function pr_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pr (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in draw.
+% --- Executes on button press in draw.
+% --- Executes on button press in draw.
+% --- Executes on button press in draw.
+function draw_Callback(hObject, eventdata, handles)
+% hObject    handle to draw (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+    A = handles.A_param;
+    B = handles.B_param;
+    C = handles.C_param;
+    D = handles.D_param;
+    % --- Get Performance Parameters (Load Conditions) ---
+    Vr_mag = str2double(get(handles.vr, 'string'));
+    caseSelection = get(handles.popupmenu4, 'value');
+    % --- Proceed with Performance Calculation using RETRIEVED A,B,C,D ---
+    Vr = Vr_mag + 0j; % Set Vr as reference phasor (complex value)
+    num_points = 30;
+    % --- Clear previous plots ---
+    cla(handles.axes1,'reset'); disableDefaultInteractivity(handles.axes1);
+    cla(handles.axes2,'reset'); disableDefaultInteractivity(handles.axes2);
+    cla(handles.axes3,'reset'); disableDefaultInteractivity(handles.axes3);
+    cla(handles.axes4,'reset'); disableDefaultInteractivity(handles.axes4);
+    % --- Perform Calculations Based on Case ---
+    if caseSelection == 1 % CASE I: Varying Pr (0-100kW), Constant PF = 0.8 lag
+        pf_angle = acos(0.8);
+        Pr_max = 100e3; % 100 kW
+        Pr_range = linspace(0, Pr_max, num_points); % Active power range in Watts
+        Eff_results = NaN(1, num_points);
+        VR_results = NaN(1, num_points);
+        for i = 1:num_points
+                Pr = Pr_range(i);
+                Qr = Pr * tan(pf_angle); % Qr is positive for lagging
+
+                % --- Performance Calculation using RETRIEVED A,B,C,D ---
+                Sr = Pr + 1j*Qr;
+
+                % Calculate receiving end current, handling potential division by near zero Vr
+                if Vr_mag < eps
+                    Ir = 0 + 0j;
+                else
+                    Ir = conj(Sr) / conj(Vr);
+                end
+
+
+                Vs = A*Vr + B*Ir;
+                Is = C*Vr + D*Ir;
+                Ss = Vs * conj(Is);
+                Ps = real(Ss);
+
+                % Calculate voltage regulation
+                % Handle potential division by near zero A or Vr_mag
+                if abs(A) < eps || Vr_mag < eps
+                    VR = NaN;
+                else
+                    V_nl = abs(Vs / A);
+                    VR = ((V_nl - Vr_mag) / Vr_mag) * 100;
+                end
+                % Handle infinite VR if Vr_mag is zero
+                 if Vr_mag < eps
+                    VR = NaN;
+                 end
+
+
+                % Calculate efficiency
+                % Handle potential division by near zero Ps or negative Pr
+                if abs(Ps) < eps || Pr < 0
+                   Eff = NaN;
+                else
+                   Eff = (Pr / Ps) * 100;
+                   if Eff < 0
+                      Eff = 0;
+                   end
+                   if Eff > 100.1 % Allow slight overshoot due to floating point
+                      Eff = 100;
+                   end
+                end
+
+            % --- End Performance Calculation ---
+                VR_results(i) = VR;
+                Eff_results(i) = Eff;
+        end
+        % Plotting for CASE I
+        Pr_plot_kW = Pr_range / 1000;
+        plot(handles.axes1, Pr_plot_kW, Eff_results, 'b-o', 'MarkerSize', 4, 'LineWidth', 1);
+        title(handles.axes1, 'Efficiency vs Active Power (PF=0.8 lag)');
+        xlabel(handles.axes1, 'Active Power (kW)'); ylabel(handles.axes1, 'Efficiency (%)');
+        grid(handles.axes1, 'on'); ylim(handles.axes1, [0 105]);
+        plot(handles.axes2, Pr_plot_kW, VR_results, 'r-o', 'MarkerSize', 4, 'LineWidth', 1);
+        title(handles.axes2, 'V.Reg. vs Active Power (PF=0.8 lag)');
+        xlabel(handles.axes2, 'Active Power (kW)'); ylabel(handles.axes2, 'Voltage Regulation (%)');
+        grid(handles.axes2, 'on'); ylim(handles.axes2, 'auto');
+        title(handles.axes3, ''); title(handles.axes4, ''); % Clear unused axes
+    else % CASE II: Constant Pr (100kW), Varying PF (0.3 lag to 0.3 lead)
+        % Set Pr to 100 kW (as per case description)
+        Pr_fixed = 100e3; % 100 kW converted to W
+
+        min_pf = 0.3;
+        num_half_points = floor(num_points/2);
+        % Generate PF range from min_pf lag to UPF
+        pf_lag_range = linspace(min_pf, 1.0, num_half_points);
+        % Generate PF range from UPF to min_pf lead (excluding the repeated 1.0 if needed)
+        pf_lead_range = linspace(1.0, min_pf, ceil(num_points/2));
+        if pf_lead_range(1) == pf_lag_range(end) && length(pf_lead_range) > 1
+            pf_lead_range = pf_lead_range(2:end); % Remove the repeated UPF
+        end
+
+
+        Eff_lag = NaN(size(pf_lag_range)); VR_lag = NaN(size(pf_lag_range));
+        Eff_lead = NaN(size(pf_lead_range)); VR_lead = NaN(size(pf_lead_range));
+
+        % Calculate for Lagging PF range (including UPF)
+        for i = 1:length(pf_lag_range)
+            pf_angle = acos(pf_lag_range(i));
+            Qr = Pr_fixed * tan(pf_angle); % Qr is positive for lagging/UPF
+            Sr = Pr_fixed + 1j*Qr;
+
+            % --- Performance Calculation using RETRIEVED A,B,C,D ---
+            % Calculate receiving end current, handling potential division by near zero Vr
+            if Vr_mag < eps
+                Ir = 0 + 0j;
+            else
+                Ir = conj(Sr) / conj(Vr);
+            end
+
+            Vs = A*Vr + B*Ir;
+            Is = C*Vr + D*Ir;
+            Ss = Vs * conj(Is);
+            Ps = real(Ss);
+
+            % Calculate voltage regulation
+             % Handle potential division by near zero A or Vr_mag
+            if abs(A) < eps || Vr_mag < eps
+                VR = NaN;
+            else
+                V_nl = abs(Vs / A);
+                VR = (V_nl - Vr_mag) / Vr_mag * 100;
+            end
+            % Handle infinite VR if Vr_mag is zero
+            if Vr_mag < eps
+               VR = NaN;
+            end
+
+
+            % Calculate efficiency
+             % Handle potential division by near zero Ps or negative Pr
+            if abs(Ps) < eps || Pr_fixed < 0
+                Eff = NaN;
+            else
+                Eff = (Pr_fixed / Ps) * 100;
+                if Eff < 0
+                    Eff = 0;
+                end
+                if Eff > 100.1 % Allow slight overshoot due to floating point
+                    Eff = 100;
+                end
+            end
+            % --- End Performance Calculation ---
+            VR_lag(i) = VR; Eff_lag(i) = Eff;
+        end
+
+        % Calculate for Leading PF range
+        for i = 1:length(pf_lead_range)
+            pf_angle = -acos(pf_lead_range(i)); % Negative angle for leading PF
+            Qr = Pr_fixed * tan(pf_angle); % Qr is negative for leading
+            Sr = Pr_fixed + 1j*Qr;
+
+             % --- Performance Calculation using RETRIEVED A,B,C,D ---
+             % Calculate receiving end current, handling potential division by near zero Vr
+            if Vr_mag < eps
+                Ir = 0 + 0j;
+            else
+                Ir = conj(Sr) / conj(Vr);
+            end
+
+            Vs = A*Vr + B*Ir;
+            Is = C*Vr + D*Ir;
+            Ss = Vs * conj(Is);
+            Ps = real(Ss);
+
+            % Calculate voltage regulation
+             % Handle potential division by near zero A or Vr_mag
+            if abs(A) < eps || Vr_mag < eps
+                VR = NaN;
+            else
+                V_nl = abs(Vs / A);
+                VR = (V_nl - Vr_mag) / Vr_mag * 100;
+            end
+            % Handle infinite VR if Vr_mag is zero
+            if Vr_mag < eps
+               VR = NaN;
+            end
+
+
+            % Calculate efficiency
+            % Handle potential division by near zero Ps or negative Pr
+            if abs(Ps) < eps || Pr_fixed < 0
+                Eff = NaN;
+            else
+                Eff = (Pr_fixed / Ps) * 100;
+                if Eff < 0
+                    Eff = 0;
+                end
+                if Eff > 100.1 % Allow slight overshoot due to floating point
+                    Eff = 100;
+                end
+            end
+            % --- End Performance Calculation ---
+            VR_lead(i) = VR; Eff_lead(i) = Eff;
+        end
+
+        Pr_fixed_kW_plot = Pr_fixed / 1000; % Use fixed kW value for titles
+
+        % Plotting for CASE II
+        % Lagging PF Plots (axes1 and axes2)
+        plot(handles.axes1, pf_lag_range, Eff_lag, 'b-o', 'MarkerSize', 4, 'LineWidth', 1);
+        title(handles.axes1, sprintf('Efficiency vs PF (Lag) @ %.0fkW', Pr_fixed_kW_plot));
+        xlabel(handles.axes1, 'PF (lagging -> UPF)'); ylabel(handles.axes1, 'Efficiency (%)');
+        grid(handles.axes1, 'on'); set(handles.axes1, 'XDir','reverse'); ylim(handles.axes1, [0 105]);
+
+        plot(handles.axes2, pf_lag_range, VR_lag, 'r-o', 'MarkerSize', 4, 'LineWidth', 1);
+        title(handles.axes2, sprintf('V.Reg. vs PF (Lag) @ %.0fkW', Pr_fixed_kW_plot));
+        xlabel(handles.axes2, 'PF (lagging -> UPF)'); ylabel(handles.axes2, 'V.Reg. (%)');
+        grid(handles.axes2, 'on'); set(handles.axes2, 'XDir','reverse'); ylim(handles.axes2, 'auto');
+
+        % Leading PF Plots (axes3 and axes4)
+        plot(handles.axes3, pf_lead_range, Eff_lead, 'b-o', 'MarkerSize', 4, 'LineWidth', 1);
+        title(handles.axes3, sprintf('Efficiency vs PF (Lead) @ %.0fkW', Pr_fixed_kW_plot));
+        xlabel(handles.axes3, 'PF (UPF -> leading)'); ylabel(handles.axes3, 'Efficiency (%)');
+        grid(handles.axes3, 'on'); xlim(handles.axes3, [min_pf 1.0]); ylim(handles.axes3, [0 105]);
+
+        plot(handles.axes4, pf_lead_range, VR_lead, 'r-o', 'MarkerSize', 4, 'LineWidth', 1);
+        title(handles.axes4, sprintf('V.Reg. vs PF (Lead) @ %.0fkW', Pr_fixed_kW_plot));
+        xlabel(handles.axes4, 'PF (UPF -> leading)'); ylabel(handles.axes4, 'V.Reg. (%)');
+        grid(handles.axes4, 'on'); xlim(handles.axes4, [min_pf 1.0]); ylim(handles.axes4, 'auto');
+    end
