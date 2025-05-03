@@ -51,7 +51,12 @@ function untitled_OpeningFcn(hObject, eventdata, handles, varargin)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to untitled (see VARARGIN)
-
+% Load and display the image
+bg = axes('units','normalized','position',[0 0 1 1]);
+uistack(bg, 'bottom');  % Send to back
+img = imread('upscalemedia-transformed (1).png');
+imagesc(img);           % Show image
+set(bg, 'handlevisibility','off', 'visible','off');  % Make it passive
 % Choose default command line output for untitled
 handles.output = hObject;
 
