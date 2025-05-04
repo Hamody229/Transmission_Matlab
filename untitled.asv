@@ -22,7 +22,7 @@ function varargout = untitled(varargin)
 
 % Edit the above text to modify the response to help untitled
 
-% Last Modified by GUIDE v2.5 05-May-2025 01:05:22
+% Last Modified by GUIDE v2.5 03-May-2025 01:57:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -86,7 +86,7 @@ set(handles.axes2, 'Visible', 'off');
 set(handles.axes3, 'Visible', 'off'); 
 set(handles.axes4, 'Visible', 'off'); 
 set(handles.draw , 'Visible', 'off'); 
-set(handles.popupmenu5, 'Visible', 'off'); 
+
 
 
 
@@ -262,8 +262,6 @@ Resistivity = str2double(get(handles.conductorR, 'string'));
 ConductorLength = str2double(get(handles.conductorL, 'string'));
 ConductorDiameter = str2double(get(handles.conductorD, 'string'));
 
-handles.L = ConductorLength ;
-
 ConductorLength = ConductorLength * 1000 ;
 ConductorDiameter = ConductorDiameter / 100 ; 
 
@@ -327,8 +325,6 @@ set(handles.axes2, 'Visible', 'off');
 set(handles.axes3, 'Visible', 'off'); 
 set(handles.axes4, 'Visible', 'off'); 
 set(handles.draw , 'Visible', 'off'); 
-set(handles.popupmenu2, 'Visible', 'off');
-
 
 
 
@@ -544,93 +540,71 @@ end
 
 
 function generate_Callback(hObject, eventdata, handles)
-    % Get input values
+% hObject    handle to generate (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+    % Get input values from the GUI
     Frequency = str2double(get(handles.freq, 'string'));
-    ConductorLength = handles.L * 1000;
+
     val2 = get(handles.popupmenu2, 'value'); % Medium model type
-    val_format = get(handles.popupmenu5, 'value'); % 1 = rectangular, 2 = phasor
-    Resistance = handles.R;
-    Inductance = handles.I;
-    Capacitance = handles.C;
+    handels.val2_han
+    Resistance = handles.R ;
+    Inductance = handles.I ;
+    Capacitance= handles.C ;
 
     % Calculate omega, Z, and Y
     omega = 2 * pi * Frequency;
-    Z = Resistance + 1j * omega * Inductance;
-    Y = 1j * omega * Capacitance;
+    Z = Resistance + 1j * omega * Inductance; 
+    Y = 1j * omega * Capacitance;         
 
-    % Initialize ABCD parameters
-    A = NaN; B = NaN; C = NaN; D = NaN;
+    % Initialize ABCD parameters (use complex NaN for detection)
+    A = complex(NaN, NaN); B = complex(NaN, NaN); C = complex(NaN, NaN); D = complex(NaN, NaN);
 
-    % Calculate ABCD parameters
-    if (ConductorLength < 80000)
+    % Calculate ABCD parameters based on line length (transmission line model)
+    if (ConductorLength < 80000) % Short line model
         A = 1;
         B = Z;
         C = 0;
         D = 1;
         model_str = 'Short Model';
-    else
-        if val2 == 2 % Pi model
+        param_str = sprintf('A = %.4f\nB = %.4f %+.4fj\nC = %.4f\nD = %.4f', A, real(B), imag(B), C, D);
+
+    else % Medium line model
+        if (val2 == 2) % Pi model
             A = 1 + (Z*Y)/2;
             B = Z;
             C = Y * (1 + (Z*Y)/4);
             D = A;
             model_str = 'Medium Model (Pi)';
-        else % T model
+        else % T model (default or val2 == 1)
             A = 1 + (Z*Y)/2;
             B = Z * (1 + (Z*Y)/4);
             C = Y;
             D = A;
             model_str = 'Medium Model (T)';
         end
+         param_str = sprintf('A = %.4f %+.4fj\nB = %.4f %+.4fj\nC = %.4e %+.4ej\nD = %.4f %+.4fj', ...
+                             real(A), imag(A), real(B), imag(B), real(C), imag(C), real(D), imag(D));
     end
 
-    % Format ABCD parameters
-    if val_format == 1
-        % Rectangular (a + jb)
-        param_str = sprintf(['A = %.4f %+.4fj\n' ...
-                             'B = %.4f %+.4fj\n' ...
-                             'C = %.4e %+.4ej\n' ...
-                             'D = %.4f %+.4fj'], ...
-                             real(A), imag(A), ...
-                             real(B), imag(B), ...
-                             real(C), imag(C), ...
-                             real(D), imag(D));
-    else
-        % Phasor (magnitude ∠ angle°)
-        param_str = sprintf(['A = %.4f ∠ %.2f°\n' ...
-                             'B = %.4f ∠ %.2f°\n' ...
-                             'C = %.4e ∠ %.2f°\n' ...
-                             'D = %.4f ∠ %.2f°'], ...
-                             abs(A), angle(A)*180/pi, ...
-                             abs(B), angle(B)*180/pi, ...
-                             abs(C), angle(C)*180/pi, ...
-                             abs(D), angle(D)*180/pi);
-    end
-
-    % Hide popupmenu2 if short line
-    if ConductorLength < 80000
-        set(handles.popupmenu2, 'Visible', 'off');
-    else
-        set(handles.popupmenu2, 'Visible', 'on');
-    end
-
-    % Update GUI
+    % --- If calculations successful, update GUI and store parameters ---
     set(handles.model, 'String', model_str);
-    set(handles.parameters, 'String', param_str);
+    set(handles.parameters, 'String', strrep(param_str, '+-', '-')); 
 
-    % Store values
+
+    % *** NEW: Store calculated ABCD parameters in handles structure ***
     handles.A_param = A;
     handles.B_param = B;
     handles.C_param = C;
     handles.D_param = D;
-    handles.params_generated = true;
 
-    % Show/hide relevant UI elements
+    handles.params_generated = true; % Set flag indicating successful generation
     set(handles.model, 'Visible', 'on');
     set(handles.modelText, 'Visible', 'on'); 
+    set(handles.popupmenu2, 'Visible', 'on');
+    set(handles.generate, 'Visible', 'on'); 
     set(handles.parameters, 'Visible', 'on');
     set(handles.popupmenu4, 'Visible', 'on'); 
-    set(handles.popupmenu5, 'Visible', 'on'); 
     set(handles.text15, 'Visible', 'on'); 
     set(handles.vr, 'Visible', 'on'); 
     set(handles.axes1, 'Visible', 'off'); 
@@ -638,6 +612,7 @@ function generate_Callback(hObject, eventdata, handles)
     set(handles.axes3, 'Visible', 'off'); 
     set(handles.axes4, 'Visible', 'off'); 
     set(handles.draw , 'Visible', 'on'); 
+    % *** NEW: Save the updated handles structure ***
     guidata(hObject, handles);
 
 
@@ -971,26 +946,3 @@ function draw_Callback(hObject, eventdata, handles)
         set(handles.axes4, 'FontWeight', 'bold'); % Tick values bold
 
     end
-
-
-% --- Executes on selection change in popupmenu5.
-function popupmenu5_Callback(hObject, eventdata, handles)
-% hObject    handle to popupmenu5 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu5 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupmenu5
-
-
-% --- Executes during object creation, after setting all properties.
-function popupmenu5_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to popupmenu5 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
