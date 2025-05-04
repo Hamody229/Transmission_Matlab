@@ -762,6 +762,8 @@ function draw_Callback(hObject, eventdata, handles)
         set(handles.axes3, 'Visible', 'off'); 
         set(handles.axes4, 'Visible', 'off'); 
         set(handles.draw , 'Visible', 'on'); 
+        set(handles.popupmenu2, 'Visible', 'off');
+
         pf_angle = acos(0.8);
         Pr_max = 100e3; % 100 kW
         Pr_range = linspace(0, Pr_max, num_points); % Active power range in Watts
@@ -846,6 +848,8 @@ function draw_Callback(hObject, eventdata, handles)
         set(handles.axes3, 'Visible', 'on'); 
         set(handles.axes4, 'Visible', 'on'); 
         set(handles.draw , 'Visible', 'on'); 
+        set(handles.popupmenu2, 'Visible', 'off');
+
         Pr_fixed = 100e3; 
 
         min_pf = 0.3;
