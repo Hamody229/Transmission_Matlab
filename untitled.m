@@ -22,7 +22,7 @@ function varargout = untitled(varargin)
 
 % Edit the above text to modify the response to help untitled
 
-% Last Modified by GUIDE v2.5 05-May-2025 01:05:22
+% Last Modified by GUIDE v2.5 07-May-2025 22:16:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -271,7 +271,8 @@ ConductorDiameter = ConductorDiameter / 100 ;
 val = get(handles.popupmenu1, 'value'); 
 GMR = 0.7788 * (ConductorDiameter/2);
 Area = (pi * (ConductorDiameter)^2) / 4;
-Resistance = (Resistivity * ConductorLength) / Area;
+ResistanceDC = (Resistivity * ConductorLength ) / Area;
+Resistance = (Resistivity * ConductorLength * 1.1) / Area;
 
 % Calculate inductance and capacitance based on spacing type
 switch val
@@ -313,6 +314,7 @@ handles.C = Capacitance ;
 set(handles.Resistance, 'string', sprintf('%.6f', Resistance));
 set(handles.Inductance, 'string', sprintf('%.6e', Inductance)); 
 set(handles.Capacitance, 'string', sprintf('%.6e', Capacitance)); 
+set(handles.RESDC , 'string' ,sprintf('%.6f',ResistanceDC));
 
 set(handles.model, 'Visible', 'on');
 set(handles.modelText, 'Visible', 'on'); 
@@ -994,6 +996,29 @@ function popupmenu5_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 
 % Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function RESDC_Callback(hObject, eventdata, handles)
+% hObject    handle to RESDC (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of RESDC as text
+%        str2double(get(hObject,'String')) returns contents of RESDC as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function RESDC_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to RESDC (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
